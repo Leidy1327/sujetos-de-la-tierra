@@ -1,0 +1,949 @@
+<title>Sujetos de la Tierra</title>
+<meta name="description" content="Un simulador de caso judicial: ejerce como magistrado ponente en los casos del río Atrato y la Amazonía colombiana, y explora los orígenes, tensiones jurídicas y principios culturales de los derechos de la naturaleza.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  /* ============ TOKENS ============ */
+  :root{
+    --paper: #E7E9DE;
+    --paper-raised: #F4F5EC;
+    --paper-sunken: #DBDECF;
+    --ink: #1A2019;
+    --ink-muted: #565F51;
+    --ink-faint: #8A8D7B;
+    --jade: #2C6B5E;
+    --jade-strong: #204F45;
+    --rust: #AE5A2A;
+    --slate: #2A3A4C;
+    --slate-soft: #3F556C;
+    --line: rgba(26,32,25,0.16);
+    --line-strong: rgba(26,32,25,0.32);
+    --shadow: rgba(20,24,18,0.18);
+    --focus: #1F6FEB;
+    --panel-invert-bg: #223040;
+    --panel-invert-text: #F4F5EC;
+    --panel-invert-text-muted: rgba(244,245,236,0.86);
+
+    --font-display: 'Fraunces', 'Iowan Old Style', ui-serif, Georgia, serif;
+    --font-doc: 'Source Serif 4', Georgia, 'Iowan Old Style', serif;
+    --font-ui: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper: #10160E;
+      --paper-raised: #171F14;
+      --paper-sunken: #0B100A;
+      --ink: #E9ECE1;
+      --ink-muted: #A7AE99;
+      --ink-faint: #6E7563;
+      --jade: #5FB59F;
+      --jade-strong: #7FCBB6;
+      --rust: #E2925C;
+      --slate: #8FB0D2;
+      --slate-soft: #6D8CAE;
+      --line: rgba(233,236,225,0.14);
+      --line-strong: rgba(233,236,225,0.28);
+      --shadow: rgba(0,0,0,0.5);
+      --focus: #79B8FF;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper: #10160E;
+    --paper-raised: #171F14;
+    --paper-sunken: #0B100A;
+    --ink: #E9ECE1;
+    --ink-muted: #A7AE99;
+    --ink-faint: #6E7563;
+    --jade: #5FB59F;
+    --jade-strong: #7FCBB6;
+    --rust: #E2925C;
+    --slate: #8FB0D2;
+    --slate-soft: #6D8CAE;
+    --line: rgba(233,236,225,0.14);
+    --line-strong: rgba(233,236,225,0.28);
+    --shadow: rgba(0,0,0,0.5);
+    --focus: #79B8FF;
+  }
+
+  /* ============ BASE ============ */
+  *{ box-sizing:border-box; }
+  html{ color-scheme: light dark; }
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-ui);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:var(--font-display); font-weight:600; text-wrap:balance; margin:0; }
+  p{ margin:0; }
+  button{ font-family:inherit; }
+  ::selection{ background:var(--jade); color:var(--paper-raised); }
+  a{ color:var(--jade-strong); }
+  :focus-visible{ outline:2px solid var(--focus); outline-offset:3px; border-radius:2px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important; }
+  }
+
+  .mono{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+
+  /* ============ SHELL ============ */
+  #shell{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---- docket header ---- */
+  #docket{
+    position:sticky; top:0; z-index:20;
+    background:
+      radial-gradient(ellipse 120% 140% at 15% -30%, rgba(44,107,94,0.16), transparent 60%),
+      repeating-linear-gradient(100deg, transparent 0 26px, var(--line) 26px 27px, transparent 27px 54px),
+      var(--paper-raised);
+    border-bottom:1px solid var(--line-strong);
+    box-shadow: 0 8px 24px -18px var(--shadow);
+  }
+  #docket-inner{
+    max-width:920px; margin:0 auto;
+    padding: 14px clamp(16px,4vw,32px);
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+  }
+  .docket-id{
+    display:flex; flex-direction:column; gap:2px; min-width:0;
+  }
+  .docket-id .kicker{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.09em; text-transform:uppercase;
+    color:var(--ink-faint);
+  }
+  .docket-id .title{
+    font-family:var(--font-display); font-size:clamp(18px,2.6vw,22px); font-weight:600; color:var(--ink);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  #meters{
+    display:flex; gap:18px; margin-left:auto; flex-wrap:wrap;
+  }
+  .meter{ display:flex; flex-direction:column; gap:4px; width:112px; }
+  .meter .m-label{ font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint); display:flex; justify-content:space-between; }
+  .meter .m-value{ font-family:var(--font-mono); color:var(--ink-muted); }
+  .m-track{ height:5px; border-radius:3px; background:var(--paper-sunken); overflow:hidden; border:1px solid var(--line); }
+  .m-fill{ height:100%; border-radius:3px; transition:width .5s ease; }
+  .m-fill.rigor{ background:var(--slate-soft); }
+  .m-fill.biocultural{ background:var(--jade); }
+  .m-fill.viabilidad{ background:var(--rust); }
+
+  /* ---- progress rail (stage stepper) ---- */
+  #rail{
+    display:flex; align-items:center; gap:6px;
+    max-width:920px; margin:0 auto; width:100%;
+    padding: 0 clamp(16px,4vw,32px) 12px;
+  }
+  .rail-node{ display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-faint); font-family:var(--font-mono); }
+  .rail-dot{ width:8px; height:8px; border-radius:50%; background:var(--paper-sunken); border:1px solid var(--line-strong); flex:none; }
+  .rail-node.done .rail-dot{ background:var(--jade); border-color:var(--jade); }
+  .rail-node.active .rail-dot{ background:var(--rust); border-color:var(--rust); }
+  .rail-node.active{ color:var(--ink); }
+  .rail-node.done{ color:var(--ink-muted); }
+  .rail-seg{ flex:1; height:1px; background:var(--line-strong); min-width:12px; }
+  .rail-seg.done{ background:var(--jade); }
+
+  /* ============ MAIN STAGE ============ */
+  main{ flex:1; display:flex; justify-content:center; padding: clamp(20px,5vw,52px) clamp(16px,4vw,32px) 80px; }
+  .stage{ width:100%; max-width:760px; }
+
+  .eyebrow{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:0.09em; text-transform:uppercase;
+    color:var(--jade-strong); margin-bottom:10px; display:block;
+  }
+  .stage h1{ font-size:clamp(30px,5vw,44px); margin-bottom:14px; }
+  .stage h2{ font-size:clamp(24px,4vw,30px); margin-bottom:14px; }
+  .lede{ font-family:var(--font-doc); font-size:18px; color:var(--ink-muted); max-width:62ch; }
+
+  /* ---- document card (expediente look) ---- */
+  .doc-card{
+    background:var(--paper-raised);
+    border:1px solid var(--line-strong);
+    border-radius:3px;
+    padding: clamp(18px,4vw,32px);
+    position:relative;
+    box-shadow: 0 1px 0 var(--line), 0 18px 40px -30px var(--shadow);
+  }
+  .doc-card::before{
+    content:""; position:absolute; left:0; top:14px; bottom:14px; width:3px;
+    background: repeating-linear-gradient(180deg, var(--jade) 0 6px, transparent 6px 12px);
+    border-radius:2px;
+  }
+  .doc-card{ padding-left: clamp(28px,6vw,44px); }
+  .stamp{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--ink-faint); border:1px solid var(--line-strong); border-radius:2px;
+    padding:3px 8px; display:inline-block;
+  }
+  .doc-body{ font-family:var(--font-doc); font-size:17px; line-height:1.65; color:var(--ink); margin-top:14px; max-width:64ch; }
+  .doc-body + .doc-body{ margin-top:12px; }
+
+  /* ---- buttons ---- */
+  .actions{ margin-top:28px; display:flex; gap:12px; flex-wrap:wrap; }
+  .btn{
+    font-family:var(--font-ui); font-weight:600; font-size:15px; cursor:pointer;
+    border-radius:2px; padding:12px 22px; border:1px solid var(--ink); background:var(--ink); color:var(--paper);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .btn:hover{ transform:translateY(-1px); }
+  .btn:active{ transform:translateY(0); }
+  .btn.secondary{ background:transparent; color:var(--ink); border-color:var(--line-strong); }
+  .btn.secondary:hover{ border-color:var(--ink); }
+
+  /* ---- timeline grid ---- */
+  .timeline-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; margin-top:8px; }
+  .tcard{
+    background:var(--paper-raised); border:1px solid var(--line-strong); border-radius:3px;
+    padding:16px; cursor:pointer; min-height:150px; display:flex; flex-direction:column; gap:8px;
+    transition: border-color .15s ease, transform .15s ease;
+    text-align:left;
+  }
+  .tcard:hover{ border-color:var(--jade); transform:translateY(-2px); }
+  .tcard:disabled{ cursor:default; }
+  .tcard .yr{ font-family:var(--font-mono); font-size:13px; color:var(--jade-strong); }
+  .tcard .place{ font-size:12px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.04em; }
+  .tcard .ttitle{ font-family:var(--font-display); font-weight:600; font-size:17px; margin-top:2px; }
+  .tcard .ttext{ font-family:var(--font-doc); font-size:14.5px; color:var(--ink-muted); line-height:1.5; display:none; }
+  .tcard .ttag{ margin-top:auto; font-family:var(--font-mono); font-size:10.5px; color:var(--ink-faint); display:none; }
+  .tcard.open .ttext, .tcard.open .ttag{ display:block; }
+  .tcard.open{ border-color:var(--jade); background:var(--paper-sunken); }
+  .tcard .hint{ margin-top:auto; font-size:12px; color:var(--ink-faint); font-style:italic; }
+  .tcard.open .hint{ display:none; }
+  .timeline-progress{ font-family:var(--font-mono); font-size:13px; color:var(--ink-muted); margin-top:18px; }
+
+  /* ---- decision options ---- */
+  .prompt{ font-family:var(--font-display); font-size:clamp(20px,3.4vw,25px); font-weight:600; margin:20px 0 14px; }
+  .options{ display:flex; flex-direction:column; gap:10px; }
+  .opt{
+    text-align:left; background:var(--paper-raised); border:1px solid var(--line-strong); border-radius:3px;
+    padding:14px 16px; cursor:pointer; font-family:var(--font-ui); color:var(--ink); font-size:15px;
+    display:flex; gap:12px; align-items:flex-start;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .opt:hover{ border-color:var(--jade); background:var(--paper-sunken); }
+  .opt .letter{
+    font-family:var(--font-mono); font-weight:600; color:var(--jade-strong); flex:none;
+    width:22px; height:22px; border:1px solid var(--line-strong); border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:12px; margin-top:1px;
+  }
+  .opt.chosen{ border-color:var(--rust); background:var(--paper-sunken); }
+  .opt:disabled{ cursor:default; opacity:0.55; }
+  .opt:disabled:hover{ border-color:var(--line-strong); background:var(--paper-raised); }
+  .opt.chosen:disabled{ opacity:1; border-color:var(--rust); }
+
+  .feedback{
+    margin-top:18px; padding:16px 18px; border-left:3px solid var(--rust); background:var(--paper-sunken);
+    font-family:var(--font-doc); font-size:15.5px; color:var(--ink); border-radius:0 3px 3px 0;
+  }
+  .feedback .flabel{ font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--rust); display:block; margin-bottom:6px; }
+  .feedback.real{ border-left-color:var(--jade); }
+  .feedback.real .flabel{ color:var(--jade-strong); }
+
+  /* ---- resolution / ending ---- */
+  .verdict-box{
+    margin-top:18px; padding:20px 22px; background:var(--panel-invert-bg); color:var(--panel-invert-text-muted); border-radius:3px;
+  }
+  .verdict-box h3{ font-family:var(--font-display); font-size:20px; margin-bottom:8px; color:var(--panel-invert-text); }
+  .verdict-box p{ font-family:var(--font-doc); font-size:15.5px; }
+
+  .tally{ display:flex; gap:20px; margin-top:18px; flex-wrap:wrap; }
+  .tally-item{ font-family:var(--font-mono); font-size:13px; color:var(--ink-muted); }
+  .tally-item b{ color:var(--ink); }
+
+  .glossary-list{ display:grid; gap:12px; margin-top:14px; }
+  .gterm{ display:grid; grid-template-columns: 190px 1fr; gap:14px; padding:12px 0; border-top:1px solid var(--line); }
+  .gterm:first-child{ border-top:none; }
+  .gterm dt{ font-family:var(--font-display); font-weight:600; font-size:15px; color:var(--jade-strong); }
+  .gterm dd{ margin:0; font-family:var(--font-doc); font-size:14.5px; color:var(--ink-muted); }
+  @media (max-width:600px){ .gterm{ grid-template-columns:1fr; gap:4px; } }
+
+  .sources{ margin-top:10px; font-family:var(--font-ui); font-size:13px; color:var(--ink-faint); }
+  .sources li{ margin-bottom:4px; }
+
+  footer{
+    text-align:center; padding:22px 16px 34px; font-family:var(--font-mono); font-size:11.5px; color:var(--ink-faint);
+    border-top:1px solid var(--line);
+  }
+
+  .cover-wrap{ display:flex; flex-direction:column; gap:22px; }
+  .cover-hero{
+    border:1px solid var(--line-strong); border-radius:4px; background:var(--paper-raised);
+    padding:clamp(24px,6vw,48px); position:relative; overflow:hidden;
+  }
+  .cover-hero::after{
+    content:""; position:absolute; inset:0;
+    background: repeating-linear-gradient(115deg, transparent 0 34px, rgba(44,107,94,0.07) 34px 35px, transparent 35px 70px);
+    pointer-events:none;
+  }
+  .role-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:22px; }
+  @media (max-width:640px){ .role-grid{ grid-template-columns:1fr; } }
+  .role-card{ background:var(--paper-sunken); border:1px solid var(--line); border-radius:3px; padding:14px; }
+  .role-card .rk{ font-family:var(--font-mono); font-size:11px; color:var(--ink-faint); text-transform:uppercase; }
+  .role-card .rt{ font-family:var(--font-display); font-weight:600; margin-top:4px; }
+
+  .tension-grid{ display:grid; gap:12px; margin-top:16px; }
+</style>
+
+<div id="shell">
+  <header id="docket">
+    <div id="docket-inner">
+      <div class="docket-id">
+        <span class="kicker mono" id="docket-kicker">Sujetos de la Tierra</span>
+        <span class="title" id="docket-case">Radicado — Prólogo</span>
+      </div>
+      <div id="meters">
+        <div class="meter">
+          <span class="m-label"><span>Rigor jurídico</span><span class="m-value mono" id="v-rigor">0</span></span>
+          <div class="m-track"><div class="m-fill rigor" id="f-rigor" style="width:50%"></div></div>
+        </div>
+        <div class="meter">
+          <span class="m-label"><span>Justicia biocultural</span><span class="m-value mono" id="v-biocultural">0</span></span>
+          <div class="m-track"><div class="m-fill biocultural" id="f-biocultural" style="width:50%"></div></div>
+        </div>
+        <div class="meter">
+          <span class="m-label"><span>Viabilidad</span><span class="m-value mono" id="v-viabilidad">0</span></span>
+          <div class="m-track"><div class="m-fill viabilidad" id="f-viabilidad" style="width:50%"></div></div>
+        </div>
+      </div>
+    </div>
+    <div id="rail"></div>
+  </header>
+
+  <main><div class="stage" id="stage"></div></main>
+
+  <footer>EXPEDIENTE DIDÁCTICO · NO CONSTITUYE ASESORÍA JURÍDICA · BASADO EN JURISPRUDENCIA REAL DE COLOMBIA Y CASOS COMPARADOS</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   DATA
+   ============================================================ */
+
+var TIMELINE = [
+  { yr:"1972", place:"Los Ángeles, EE. UU.", title:"¿Pueden los árboles demandar?",
+    text:"El jurista Christopher Stone publica «Should Trees Have Standing?»: propone que ríos, bosques y montañas tengan representación legal propia, igual que ya la tienen las corporaciones o los barcos.",
+    tag:"Legitimación de entes no humanos" },
+  { yr:"2006", place:"Tamaqua, Pensilvania", title:"La primera ordenanza",
+    text:"Un pequeño municipio agrícola aprueba la primera norma del mundo que reconoce derechos a los ecosistemas, para frenar el vertido de lodos tóxicos de minería en sus tierras.",
+    tag:"Primer reconocimiento normativo local" },
+  { yr:"2008", place:"Montecristi, Ecuador", title:"La Pachamama entra a la Constitución",
+    text:"La nueva Constitución ecuatoriana dedica un capítulo a los «Derechos de la Naturaleza», inspirado en el Sumak Kawsay (Buen Vivir) de los pueblos andinos: la naturaleza deja de ser objeto y pasa a ser sujeto.",
+    tag:"Cosmovisión indígena andina" },
+  { yr:"2010", place:"Bolivia", title:"La Ley de la Madre Tierra",
+    text:"Bolivia promulga la Ley de Derechos de la Madre Tierra, que reconoce a la naturaleza como sujeto colectivo de interés público, con principios como la armonía y la regeneración.",
+    tag:"Pachamama como sujeto colectivo" },
+  { yr:"2011", place:"Loja, Ecuador", title:"El primer fallo",
+    text:"Una corte provincial falla a favor del río Vilcabamba y detiene una obra vial: es el primer caso judicial del mundo que aplica en la práctica los derechos constitucionales de la naturaleza.",
+    tag:"Primer precedente judicial" },
+  { yr:"2017", place:"Nueva Zelanda / India", title:"Ríos con personalidad jurídica",
+    text:"El río Whanganui obtiene personalidad jurídica mediante un tratado con el pueblo maorí (Te Awa Tupua). Días después, una corte india reconoce a los ríos Ganges y Yamuna como personas legales.",
+    tag:"Personalidad jurídica no humana" },
+  { yr:"2016–2018", place:"Colombia", title:"Un río y un bioma",
+    text:"La Corte Constitucional (río Atrato, 2016) y la Corte Suprema de Justicia (Amazonía, 2018) llevan la doctrina a dos escalas nuevas: un cuerpo de agua y un bioma compartido por varios países. Aquí empieza tu expediente.",
+    tag:"El caso colombiano" }
+];
+
+var TENSIONS = [
+  { id:"biocentrismo", label:"Biocentrismo vs. antropocentrismo",
+    text:"¿Se protege a un río o a un bosque porque tienen valor en sí mismos, o solo porque los humanos dependemos de ellos? La primera vía obliga al derecho a imaginar sujetos sin voz propia; la segunda es más manejable, pero deja a la naturaleza como telón de fondo de los derechos humanos." },
+  { id:"cosmovision", label:"Cosmovisiones ancestrales vs. derecho positivo occidental",
+    text:"El derecho moderno se construyó sobre la propiedad y la persona individual. Las comunidades afro e indígenas del Atrato, o los pueblos andinos que inspiraron a Ecuador, describen otra relación: de parentesco, no de propiedad. Traducir esa relación a sentencias, sin domesticarla, es uno de los retos más difíciles del derecho ambiental contemporáneo." },
+  { id:"cumplimiento", label:"Garantismo simbólico vs. capacidad real de cumplimiento",
+    text:"Declarar sujeto de derechos a un río o a un bioma cambia el lenguaje jurídico y político. Pero como han documentado organizaciones de seguimiento, años después de ambas sentencias colombianas la implementación seguía incompleta: comisiones sin recursos, planes sin plazos, territorios con poca presencia estatal." }
+];
+
+function mk(prompt, options){ return { prompt: prompt, options: options }; }
+function opt(letter, label, text, effects, feedback, real){
+  return { letter:letter, label:label, text:text, effects:effects, feedback:feedback, real:!!real };
+}
+
+var ATRATO = {
+  case:"atrato",
+  docket:"T-622 de 2016 · Corte Constitucional",
+  title:"El río que dejó de ser cosa",
+  intro:[
+    "Radicado T-622 de 2016 — Corte Constitucional de Colombia.",
+    "Los consejos comunitarios afrodescendientes e indígenas de la cuenca del río Atrato (Chocó), acompañados por la organización Tierra Digna, interponen una acción de tutela contra la Presidencia y varios ministerios.",
+    "Durante décadas, la minería ilegal —dragas, retroexcavadoras y mercurio— ha envenenado el río del que dependen para pescar, bañarse, sembrar y sostener su vida espiritual. El expediente llega a tu despacho como magistrado o magistrada ponente."
+  ],
+  decisions:[
+    mk("¿Qué está realmente en juego en este expediente?", [
+      opt("A","Un derecho ambiental clásico","Se vulneró el derecho a un ambiente sano de las comunidades ribereñas.",
+        {rigor:1,biocultural:-1,viabilidad:1},
+        "Sólido y fácil de sustentar en la Constitución de 1991, pero deja al río como simple «medio ambiente»: algo que rodea a los sujetos humanos, no un sujeto en sí mismo."),
+      opt("B","Un sujeto de derechos","El río Atrato, su cuenca y sus afluentes son, en sí mismos, titulares de derechos a la protección, conservación, mantenimiento y restauración.",
+        {rigor:2,biocultural:2,viabilidad:-1},
+        "Esta fue la decisión real de la Corte: por primera vez en Colombia, un ecosistema deja de ser «cosa» y se convierte en sujeto de derechos. Un argumento audaz — que después exige inventar cómo ese río «habla» y hace valer sus derechos en la práctica.", true),
+      opt("C","Un problema de policía administrativa","Basta con clausurar las minas sin título y sancionar a los responsables.",
+        {rigor:-1,biocultural:-2,viabilidad:2},
+        "Resuelve el síntoma —la minería— pero ignora que las comunidades reclaman algo más profundo: una relación ancestral con el río que el derecho administrativo ordinario no alcanza a nombrar.")
+    ]),
+    mk("¿En qué principio fundas la parte central de la sentencia?", [
+      opt("A","Derecho comparado","Cito los casos de Ecuador (2008), Bolivia (2010) y el río Whanganui para sostener la tesis.",
+        {rigor:1,biocultural:1,viabilidad:0},
+        "Da legitimidad internacional a la tesis, pero corre el riesgo de sonar «importado» si no lo enraízas en el territorio y la gente del Chocó."),
+      opt("B","El principio biocultural","La identidad cultural y espiritual de las comunidades negras e indígenas del Atrato está entretejida con la del río: proteger a una es proteger a la otra.",
+        {rigor:2,biocultural:2,viabilidad:0},
+        "Este fue el corazón real del fallo: la Corte acuñó el concepto de «biocultural» para decir que naturaleza y comunidades étnicas no son realidades separadas, sino una sola trama de vida.", true),
+      opt("C","Norma ambiental vigente","Me limito al Código de Recursos Naturales, sin entrar en consideraciones culturales.",
+        {rigor:0,biocultural:-2,viabilidad:1},
+        "Jurídicamente prudente, pero borra justo lo que las comunidades vinieron a decir en la audiencia: que el río es sujeto porque es pariente, no porque una norma lo permita.")
+    ]),
+    mk("¿Quién habla en nombre del río a partir de ahora?", [
+      opt("A","Un ministerio","El Ministerio de Ambiente será su único representante legal.",
+        {rigor:0,biocultural:-1,viabilidad:1},
+        "Es la vía más ordenada desde la burocracia estatal, pero deja fuera a quienes mejor conocen el río: sus propias comunidades ribereñas."),
+      opt("B","Una comisión de guardianes","Se crea una Comisión de Guardianes integrada por el Estado y un representante de cada comunidad étnica de la cuenca.",
+        {rigor:1,biocultural:2,viabilidad:-1},
+        "Así ocurrió: nace el Cuerpo Colegiado de Guardianes del Atrato. Una innovación institucional hermosa — y también frágil, porque exige coordinar actores con recursos y poder muy desiguales.", true),
+      opt("C","Un perito técnico","Un perito independiente evaluará el estado del río cada año y rendirá informe a la Corte.",
+        {rigor:0,biocultural:-1,viabilidad:1},
+        "Técnicamente prolijo, pero convierte otra vez al río en objeto de medición, no en sujeto con voz propia.")
+    ]),
+    mk("¿Qué ordenas frente a la contaminación y la crisis humanitaria?", [
+      opt("A","Fuerza pública inmediata","Erradicación militar de la minería ilegal, sin medidas adicionales.",
+        {rigor:-1,biocultural:-1,viabilidad:-1},
+        "Puede sonar contundente, pero sin alternativas económicas para los mineros artesanales, el conflicto se traslada río abajo — no se resuelve."),
+      opt("B","Plan estructural","Ordenar descontaminación, estudios toxicológicos y epidemiológicos, y recuperación de la cuenca, con participación de comunidades y universidades.",
+        {rigor:2,biocultural:1,viabilidad:0},
+        "Esto ordenó la Corte, involucrando a la Universidad de Antioquia. Una sentencia «estructural»: ambiciosa, bien fundamentada… y de cumplimiento lento, como han señalado organizaciones de seguimiento del caso.", true),
+      opt("C","Solo sanción penal","Sancionar penalmente a los mineros identificados, sin más órdenes.",
+        {rigor:-1,biocultural:-1,viabilidad:0},
+        "Castiga a los eslabones más visibles y débiles de la cadena, sin tocar el mercado del oro ni el mercurio que la sostiene.")
+    ])
+  ],
+  resolution:[
+    "Fuera de tu despacho, esto fue lo que ocurrió: la Corte Constitucional declaró al río Atrato, su cuenca y afluentes como una entidad sujeto de derechos a la protección, conservación, mantenimiento y restauración.",
+    "Ordenó al Estado y a las comunidades étnicas ejercer conjuntamente la guardería y representación del río, a través de un Cuerpo Colegiado de Guardianes, y encargó a la Universidad de Antioquia el diseño técnico del plan de descontaminación.",
+    "Casi una década después, organizaciones de seguimiento reportan avances desiguales: la Comisión de Guardianes existe y sesiona, pero la minería ilegal no ha desaparecido y buena parte de las órdenes estructurales sigue en ejecución."
+  ]
+};
+
+var AMAZONIA = {
+  case:"amazonia",
+  docket:"STC4360-2018 · Corte Suprema de Justicia",
+  title:"Una selva entera en el estrado",
+  intro:[
+    "Radicado STC4360-2018 — Corte Suprema de Justicia, Sala de Casación Civil.",
+    "Veinticinco niñas, niños y jóvenes de distintas regiones de Colombia, acompañados por la organización Dejusticia, presentan una tutela: alegan que la deforestación acelerada de la Amazonía y el cambio climático ponen en riesgo su derecho a la vida, la salud y un ambiente sano.",
+    "No piden una indemnización. Piden que el Estado actúe — también en nombre de quienes todavía no han nacido."
+  ],
+  decisions:[
+    mk("¿Tienen legitimidad para demandar en nombre de quienes aún no existen?", [
+      opt("A","No hay legitimación","El derecho procesal exige un interés actual y directo; rechazo la tutela.",
+        {rigor:1,biocultural:-2,viabilidad:1},
+        "Es la lectura clásica del proceso civil — y la que habría cerrado la puerta a uno de los fallos más comentados de la justicia climática latinoamericana."),
+      opt("B","Sujetos de especial protección","Las generaciones futuras son sujetos de especial protección constitucional; la solidaridad intergeneracional lo justifica.",
+        {rigor:2,biocultural:2,viabilidad:0},
+        "La Corte Suprema aceptó este argumento, abriendo la puerta a la «justicia intergeneracional» en Colombia: los derechos de quienes vendrán después también pueden defenderse hoy.", true),
+      opt("C","Solo los 25 demandantes","Reconozco legitimación únicamente a quienes firmaron la tutela, no a un concepto abstracto de generación futura.",
+        {rigor:0,biocultural:-1,viabilidad:1},
+        "Evita el debate filosófico, pero también evita nombrar lo que de verdad está en juego: un daño que hoy es apenas parcial, pero que mañana puede ser irreversible.")
+    ]),
+    mk("¿Puede un bioma entero —no solo un río— ser sujeto de derechos?", [
+      opt("A","Sí, la Amazonía completa","Declaro a la Amazonía colombiana entidad sujeto de derechos a la protección, conservación, mantenimiento y restauración.",
+        {rigor:2,biocultural:2,viabilidad:-1},
+        "Así lo hizo la Corte Suprema, citando expresamente el precedente del Atrato: la doctrina biocéntrica salta de un río delimitado a un bioma de millones de hectáreas compartido por varios países.", true),
+      opt("B","Solo medidas sectoriales","Un bioma es demasiado extenso y difuso para tener derechos operativos; ordeno medidas ambientales puntuales.",
+        {rigor:0,biocultural:-1,viabilidad:1},
+        "Argumento prudente sobre la dificultad práctica de vigilar un sujeto de derechos del tamaño de un país — pero deja sin nombre jurídico a la selva como totalidad viva."),
+      opt("C","Solo especies en peligro","Reconozco derechos a especies en peligro crítico dentro de la Amazonía, no al bioma completo.",
+        {rigor:-1,biocultural:0,viabilidad:0},
+        "Fragmenta el ecosistema en piezas de museo, especie por especie, cuando lo que describen los demandantes es una red interdependiente.")
+    ]),
+    mk("¿Qué mandato le das al Estado frente a la deforestación?", [
+      opt("A","Pacto intergeneracional","Ordenar, en cuatro meses, un Pacto Intergeneracional por la Vida del Medio Ambiente con sociedad civil, comunidades y entidades territoriales amazónicas.",
+        {rigor:2,biocultural:1,viabilidad:-1},
+        "Esto ordenó la Corte. Un mandato ambicioso de gobernanza participativa, que exige coordinar decenas de municipios, resguardos y entidades en una región con fuerte presencia de economías ilegales.", true),
+      opt("B","Más fuerza militar","Aumentar de inmediato el pie de fuerza en la región para frenar la tala.",
+        {rigor:0,biocultural:-1,viabilidad:0},
+        "Ataca un síntoma visible, pero la deforestación amazónica está ligada a economías ilegales y conflicto armado que la sola presencia militar no desarticula."),
+      opt("C","Delegar sin plazos","Delegar el diseño de la política a un solo ministerio, sin plazos ni mecanismos de seguimiento.",
+        {rigor:-1,biocultural:-1,viabilidad:1},
+        "Parece viable a corto plazo, pero sin plazos ni participación corre el riesgo de quedar en el papel — como advirtieron después organizaciones de seguimiento de la sentencia.")
+    ]),
+    mk("Tensión final: ¿es exigible una sentencia así en un territorio con poca presencia estatal?", [
+      opt("A","Insistir en metas verificables","Sí, y por eso el fallo debe fijar metas medibles y rendición de cuentas periódica.",
+        {rigor:1,biocultural:0,viabilidad:2},
+        "El realismo institucional es también una forma de justicia: una orden que nadie puede cumplir no protege a nadie."),
+      opt("B","La fuerza simbólica basta","El reconocimiento ya vale por sí mismo, aunque el cumplimiento sea incierto.",
+        {rigor:0,biocultural:2,viabilidad:-2},
+        "Es cierto que declarar sujeto de derechos a la Amazonía cambia el lenguaje jurídico y político — pero, como han documentado Dejusticia y otras organizaciones, años después la implementación seguía incompleta y sin coordinación institucional clara.", true),
+      opt("C","No es un asunto del juez","Prefiero no pronunciarme sobre el cumplimiento: es un problema del ejecutivo.",
+        {rigor:-1,biocultural:-1,viabilidad:0},
+        "Lavarse las manos frente al cumplimiento es, en la práctica, dejar la sentencia en el aire.")
+    ])
+  ],
+  resolution:[
+    "Fuera de tu despacho, esto fue lo que ocurrió: la Corte Suprema de Justicia reconoció a la Amazonía colombiana como sujeto de derechos y aceptó la legitimación de los 25 demandantes en nombre de las generaciones futuras.",
+    "Ordenó al Gobierno, los ministerios, las corporaciones autónomas regionales y los municipios amazónicos formular un Pacto Intergeneracional por la Vida del Medio Ambiente en cuatro meses, con metas de deforestación cero.",
+    "Años después, Dejusticia y otras organizaciones documentaron que buena parte de esas órdenes no se cumplió a tiempo: el Pacto se formuló con retraso y la coordinación entre entidades siguió siendo débil frente a la magnitud del territorio."
+  ]
+};
+
+var ENDINGS = {
+  transformadora:{
+    name:"Sentencia Transformadora",
+    text:"Tu balance entre rigor, biocultura y viabilidad fue el más difícil de lograr: ni la sentencia del Atrato ni la de la Amazonía lo alcanzaron del todo. Es, más que un resultado, una aspiración — la que tanto los tribunales colombianos como la doctrina internacional siguen persiguiendo caso tras caso."
+  },
+  garantista:{
+    name:"Sentencia Garantista, de Cumplimiento Incierto",
+    text:"Construiste una sentencia doctrinalmente rica y culturalmente situada — muy cercana, en espíritu, a lo que realmente escribieron la Corte Constitucional y la Corte Suprema. Pero, como advirtieron después Dejusticia y otras organizaciones de seguimiento, ese mismo perfil es el que más ha tardado en traducirse en hechos sobre el territorio."
+  },
+  tecnocratica:{
+    name:"Sentencia Tecnocrática",
+    text:"Tu sentencia es impecable en técnica jurídica, pero trata a la naturaleza y a las comunidades como objetos de gestión, no como sujetos con voz propia. Es, en cierto modo, la sentencia que se habría escrito antes de 2016 — la que la Corte decidió no escribir."
+  },
+  prudente:{
+    name:"Sentencia Prudente",
+    text:"Diste prioridad a lo que el Estado puede efectivamente cumplir. Es una sentencia realista y difícil de criticar en un tribunal de segunda instancia — pero también la que menos empuja la frontera doctrinal que Ecuador, Bolivia, Nueva Zelanda y la propia Colombia han ido construyendo desde 1972."
+  },
+  construccion:{
+    name:"Sentencia en Construcción",
+    text:"Tu expediente combina argumentos de distinto signo, sin inclinarse claramente hacia ninguno de los tres valores en juego. No es un defecto: es, de hecho, lo que ocurre en la mayoría de los tribunales del mundo cuando enfrentan por primera vez esta categoría emergente del derecho."
+  }
+};
+
+function computeEnding(m){
+  var vals = [m.rigor, m.biocultural, m.viabilidad];
+  var max = Math.max.apply(null, vals);
+  var min = Math.min.apply(null, vals);
+  var spread = max - min;
+  if(spread <= 4 && min >= 0) return ENDINGS.transformadora;
+  if(m.biocultural === max && m.viabilidad === min && spread > 4) return ENDINGS.garantista;
+  if(m.rigor === max && m.biocultural === min && spread > 4) return ENDINGS.tecnocratica;
+  if(m.viabilidad === max && spread > 4) return ENDINGS.prudente;
+  return ENDINGS.construccion;
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+
+var state = {
+  step: 0,
+  meters: { rigor:0, biocultural:0, viabilidad:0 },
+  openedCards: {},
+  log: [],           // {case, index, letter, real}
+  tensionChoice: null
+};
+
+var FLOW = buildFlow();
+function buildFlow(){
+  var f = [{type:"cover"}, {type:"timeline"}];
+  ["atrato","amazonia"].forEach(function(key){
+    var C = key === "atrato" ? ATRATO : AMAZONIA;
+    f.push({type:"caseIntro", data:C});
+    for(var i=0;i<C.decisions.length;i++){ f.push({type:"decision", data:C, index:i}); }
+    f.push({type:"resolution", data:C});
+  });
+  f.push({type:"tribunal"});
+  f.push({type:"ending"});
+  f.push({type:"glossary"});
+  return f;
+}
+
+var RAIL_LABELS = ["Nacimiento", "Atrato", "Amazonía", "Tribunal final"];
+function railStageForStep(i){
+  var t = FLOW[i].type;
+  if(t === "cover") return -1;
+  if(t === "timeline") return 0;
+  if(FLOW[i].data === ATRATO) return 1;
+  if(FLOW[i].data === AMAZONIA) return 2;
+  return 3;
+}
+
+/* ============================================================
+   RENDER HELPERS
+   ============================================================ */
+
+function el(tag, attrs, children){
+  var e = document.createElement(tag);
+  if(attrs) for(var k in attrs){
+    if(k === "class") e.className = attrs[k];
+    else if(k === "html") e.innerHTML = attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  (children||[]).forEach(function(c){ if(c) e.appendChild(c); });
+  return e;
+}
+function txt(tag, text, cls){ var e = el(tag, cls?{class:cls}:null); e.textContent = text; return e; }
+
+function updateMeters(){
+  ["rigor","biocultural","viabilidad"].forEach(function(k){
+    var v = state.meters[k];
+    document.getElementById("v-"+k).textContent = (v>0?"+":"") + v;
+    var pct = Math.max(4, Math.min(96, 50 + v*4));
+    document.getElementById("f-"+k).style.width = pct + "%";
+  });
+}
+
+function updateDocket(){
+  var i = state.step, entry = FLOW[i];
+  var kicker = "Sujetos de la Tierra", caseLabel = "Radicado — Prólogo";
+  if(entry.type === "timeline"){ caseLabel = "Expediente de orígenes"; }
+  else if(entry.data){ kicker = entry.data.docket; caseLabel = entry.data.title; }
+  else if(entry.type === "tribunal"){ caseLabel = "Alegato final"; }
+  else if(entry.type === "ending"){ caseLabel = "Sentencia"; }
+  else if(entry.type === "glossary"){ caseLabel = "Glosario y fuentes"; }
+  document.getElementById("docket-kicker").textContent = kicker;
+  document.getElementById("docket-case").textContent = caseLabel;
+}
+
+function updateRail(){
+  var rail = document.getElementById("rail");
+  rail.innerHTML = "";
+  var current = railStageForStep(state.step);
+  RAIL_LABELS.forEach(function(label, idx){
+    if(idx>0){
+      rail.appendChild(el("div", {class:"rail-seg" + (idx<=current?" done":"")}));
+    }
+    var cls = "rail-node" + (idx<current?" done":"") + (idx===current?" active":"");
+    rail.appendChild(el("div", {class:cls}, [el("span",{class:"rail-dot"}), txt("span", label)]));
+  });
+}
+
+function goTo(step){
+  state.step = step;
+  render();
+  window.scrollTo({top:0, behavior:"instant" in window ? "instant" : "auto"});
+}
+function next(){ goTo(state.step + 1); }
+
+/* ============================================================
+   SCENES
+   ============================================================ */
+
+function renderCover(){
+  var wrap = el("div", {class:"cover-wrap"});
+  var hero = el("div", {class:"cover-hero"});
+  hero.appendChild(txt("span","Un simulador de caso judicial","eyebrow"));
+  hero.appendChild(txt("h1","Sujetos de la Tierra"));
+  hero.appendChild(el("p",{class:"lede"}, [document.createTextNode(
+    "¿Puede un río tener abogado? ¿Puede una selva demandar en nombre de quien todavía no ha nacido? Vas a ejercer como magistrado o magistrada ponente en dos casos reales de la justicia colombiana, y a recorrer el linaje de ideas — filosóficas, jurídicas y culturales — que los hicieron posibles."
+  )]));
+
+  var roles = el("div",{class:"role-grid"});
+  [
+    ["Expediente de orígenes","1972 → 2018 · una línea de tiempo jurídica"],
+    ["Caso 1","Río Atrato — Sentencia T-622 de 2016"],
+    ["Caso 2","Amazonía — Sentencia STC4360-2018"]
+  ].forEach(function(r){
+    roles.appendChild(el("div",{class:"role-card"},[
+      txt("div", r[0], "rk"),
+      txt("div", r[1], "rt")
+    ]));
+  });
+  hero.appendChild(roles);
+
+  var actions = el("div",{class:"actions"});
+  var startBtn = el("button",{class:"btn"}); startBtn.textContent="Abrir el expediente";
+  startBtn.addEventListener("click", next);
+  actions.appendChild(startBtn);
+  hero.appendChild(actions);
+
+  wrap.appendChild(hero);
+  return wrap;
+}
+
+function renderTimeline(){
+  var wrap = el("div");
+  wrap.appendChild(txt("span","Antes del primer caso","eyebrow"));
+  wrap.appendChild(txt("h2","Expediente de orígenes"));
+  wrap.appendChild(el("p",{class:"lede"},[document.createTextNode(
+    "Toca cada ficha para abrirla. Son los hitos que explican de dónde viene la idea de que la naturaleza pueda ser, jurídicamente, un sujeto y no un objeto."
+  )]));
+
+  var grid = el("div",{class:"timeline-grid"});
+  TIMELINE.forEach(function(item, idx){
+    var isOpen = !!state.openedCards[idx];
+    var card = el("button",{class:"tcard" + (isOpen?" open":"")});
+    card.appendChild(txt("div", item.yr, "yr mono"));
+    card.appendChild(txt("div", item.place, "place"));
+    card.appendChild(txt("div", item.title, "ttitle"));
+    card.appendChild(txt("div", item.text, "ttext"));
+    card.appendChild(txt("div", "· " + item.tag, "ttag mono"));
+    card.appendChild(txt("div", "Toca para abrir la ficha →", "hint"));
+    card.addEventListener("click", function(){
+      state.openedCards[idx] = true;
+      render();
+    });
+    grid.appendChild(card);
+  });
+  wrap.appendChild(grid);
+
+  var openedCount = Object.keys(state.openedCards).length;
+  wrap.appendChild(txt("div", openedCount + " de " + TIMELINE.length + " fichas abiertas", "timeline-progress mono"));
+
+  var actions = el("div",{class:"actions"});
+  var btn = el("button",{class:"btn"});
+  btn.textContent = openedCount === TIMELINE.length ? "Entrar al tribunal" : "Entrar al tribunal de todas formas";
+  btn.addEventListener("click", next);
+  actions.appendChild(btn);
+  wrap.appendChild(actions);
+  return wrap;
+}
+
+function renderCaseIntro(entry){
+  var C = entry.data;
+  var wrap = el("div");
+  wrap.appendChild(txt("span", C.docket, "eyebrow mono"));
+  wrap.appendChild(txt("h2", C.title));
+  var card = el("div",{class:"doc-card"});
+  card.appendChild(el("span",{class:"stamp"}, [document.createTextNode("Para reparto — Sala de decisión")]));
+  C.intro.forEach(function(p){ card.appendChild(txt("p", p, "doc-body")); });
+  wrap.appendChild(card);
+  var actions = el("div",{class:"actions"});
+  var btn = el("button",{class:"btn"}); btn.textContent = "Asumir la ponencia";
+  btn.addEventListener("click", next);
+  actions.appendChild(btn);
+  wrap.appendChild(actions);
+  return wrap;
+}
+
+function renderDecision(entry){
+  var C = entry.data, idx = entry.index, d = C.decisions[idx];
+  var wrap = el("div");
+  wrap.appendChild(txt("span", C.docket + " · Punto de decisión " + (idx+1) + " de " + C.decisions.length, "eyebrow mono"));
+  wrap.appendChild(txt("h2", C.title));
+  wrap.appendChild(txt("div", d.prompt, "prompt"));
+
+  var logKey = C.case + "-" + idx;
+  var existing = state.log.filter(function(l){ return l.key === logKey; })[0];
+
+  var optionsWrap = el("div",{class:"options"});
+  d.options.forEach(function(o){
+    var chosen = existing && existing.letter === o.letter;
+    var b = el("button",{class:"opt" + (chosen?" chosen":"")});
+    if(existing) b.disabled = true;
+    b.appendChild(txt("span", o.letter, "letter"));
+    var body = el("span");
+    body.appendChild(el("strong",null,[document.createTextNode(o.label)]));
+    body.appendChild(document.createElement("br"));
+    body.appendChild(document.createTextNode(o.text));
+    b.appendChild(body);
+    if(!existing){
+      b.addEventListener("click", function(){
+        state.meters.rigor += o.effects.rigor;
+        state.meters.biocultural += o.effects.biocultural;
+        state.meters.viabilidad += o.effects.viabilidad;
+        state.log.push({ key: logKey, case:C.case, index:idx, letter:o.letter, real:o.real });
+        updateMeters();
+        render();
+      });
+    }
+    optionsWrap.appendChild(b);
+  });
+  wrap.appendChild(optionsWrap);
+
+  if(existing){
+    var chosenOpt = d.options.filter(function(o){ return o.letter === existing.letter; })[0];
+    var fb = el("div",{class:"feedback" + (chosenOpt.real ? " real" : "")});
+    fb.appendChild(txt("span", chosenOpt.real ? "Así lo resolvió el tribunal real" : "Consecuencias de tu decisión", "flabel"));
+    fb.appendChild(txt("p", chosenOpt.feedback));
+    wrap.appendChild(fb);
+
+    var actions = el("div",{class:"actions"});
+    var btn = el("button",{class:"btn"});
+    btn.textContent = (idx === C.decisions.length-1) ? "Ver la resolución" : "Siguiente punto";
+    btn.addEventListener("click", next);
+    actions.appendChild(btn);
+    wrap.appendChild(actions);
+  }
+  return wrap;
+}
+
+function dominantAxis(delta){
+  var entries = [["rigor jurídico", delta.rigor], ["justicia biocultural", delta.biocultural], ["viabilidad práctica", delta.viabilidad]];
+  entries.sort(function(a,b){ return b[1]-a[1]; });
+  var top = entries[0], second = entries[1];
+  if(top[1] - second[1] <= 1) return "buscó equilibrio entre rigor, biocultura y viabilidad";
+  return "se inclinó hacia " + (top[0]==="rigor jurídico" ? "el " + top[0] : "la " + top[0]);
+}
+
+function renderResolution(entry){
+  var C = entry.data;
+  var caseLog = state.log.filter(function(l){ return l.case === C.case; });
+  var delta = {rigor:0,biocultural:0,viabilidad:0};
+  var matched = 0;
+  caseLog.forEach(function(l){
+    var d = C.decisions[l.index];
+    var o = d.options.filter(function(o){ return o.letter === l.letter; })[0];
+    delta.rigor += o.effects.rigor; delta.biocultural += o.effects.biocultural; delta.viabilidad += o.effects.viabilidad;
+    if(o.real) matched++;
+  });
+
+  var wrap = el("div");
+  wrap.appendChild(txt("span", C.docket, "eyebrow mono"));
+  wrap.appendChild(txt("h2","Resolución"));
+
+  var card = el("div",{class:"doc-card"});
+  card.appendChild(el("span",{class:"stamp"},[document.createTextNode("Lo que ocurrió en la vida real")]));
+  C.resolution.forEach(function(p){ card.appendChild(txt("p", p, "doc-body")); });
+  wrap.appendChild(card);
+
+  var vb = el("div",{class:"verdict-box"});
+  vb.appendChild(el("h3",null,[document.createTextNode("Tu sentencia")]));
+  vb.appendChild(txt("p","Tu ponencia " + dominantAxis(delta) + ". Coincidiste con la decisión que realmente tomó el tribunal en " + matched + " de " + caseLog.length + " puntos."));
+  wrap.appendChild(vb);
+
+  var actions = el("div",{class:"actions"});
+  var btn = el("button",{class:"btn"});
+  btn.textContent = C.case === "atrato" ? "Pasar al caso de la Amazonía" : "Ir al alegato final";
+  btn.addEventListener("click", next);
+  actions.appendChild(btn);
+  wrap.appendChild(actions);
+  return wrap;
+}
+
+function renderTribunal(){
+  var wrap = el("div");
+  wrap.appendChild(txt("span","Antes de la sentencia final","eyebrow"));
+  wrap.appendChild(txt("h2","Alegato final"));
+  wrap.appendChild(el("p",{class:"lede"},[document.createTextNode(
+    "Has resuelto dos casos. Antes de conocer tu sentencia, elige la tensión que te parece más difícil de resolver entre todas las que atravesaste."
+  )]));
+
+  var grid = el("div",{class:"tension-grid"});
+  TENSIONS.forEach(function(t){
+    var chosen = state.tensionChoice === t.id;
+    var card = el("button",{class:"opt" + (chosen?" chosen":"")});
+    if(state.tensionChoice) card.disabled = true;
+    card.appendChild(txt("span", t.id==="biocentrismo"?"1":t.id==="cosmovision"?"2":"3", "letter"));
+    var body = el("span");
+    body.appendChild(el("strong",null,[document.createTextNode(t.label)]));
+    if(chosen){
+      body.appendChild(document.createElement("br"));
+      body.appendChild(document.createTextNode(t.text));
+    }
+    card.appendChild(body);
+    if(!state.tensionChoice){
+      card.addEventListener("click", function(){ state.tensionChoice = t.id; render(); });
+    }
+    grid.appendChild(card);
+  });
+  wrap.appendChild(grid);
+
+  if(state.tensionChoice){
+    var actions = el("div",{class:"actions"});
+    var btn = el("button",{class:"btn"}); btn.textContent = "Conocer la sentencia";
+    btn.addEventListener("click", next);
+    actions.appendChild(btn);
+    wrap.appendChild(actions);
+  }
+  return wrap;
+}
+
+function renderEnding(){
+  var ending = computeEnding(state.meters);
+  var wrap = el("div");
+  wrap.appendChild(txt("span","Fallo final","eyebrow"));
+  wrap.appendChild(txt("h2", ending.name));
+
+  var vb = el("div",{class:"verdict-box"});
+  vb.appendChild(txt("p", ending.text));
+  wrap.appendChild(vb);
+
+  var tally = el("div",{class:"tally"});
+  [["Rigor jurídico", state.meters.rigor],["Justicia biocultural", state.meters.biocultural],["Viabilidad práctica", state.meters.viabilidad]].forEach(function(t){
+    tally.appendChild(el("div",{class:"tally-item"},[document.createTextNode(t[0]+": "), el("b",null,[document.createTextNode((t[1]>0?"+":"")+t[1])])]));
+  });
+  wrap.appendChild(tally);
+
+  var actions = el("div",{class:"actions"});
+  var btn = el("button",{class:"btn"}); btn.textContent = "Ver glosario y fuentes";
+  btn.addEventListener("click", next);
+  actions.appendChild(btn);
+  wrap.appendChild(actions);
+  return wrap;
+}
+
+function renderGlossary(){
+  var wrap = el("div");
+  wrap.appendChild(txt("span","Para cerrar el expediente","eyebrow"));
+  wrap.appendChild(txt("h2","Glosario y fuentes"));
+
+  var dl = el("dl",{class:"glossary-list"});
+  var terms = [
+    ["Sujeto de derechos","Categoría jurídica que reconoce a una entidad —una persona, pero también un río, un bioma o, según algunas propuestas, un animal— como titular de derechos exigibles, y no solo como objeto regulado."],
+    ["Biocentrismo / ecocentrismo","Perspectiva ética que atribuye valor propio a la naturaleza, más allá de su utilidad para los humanos; se opone al antropocentrismo clásico del derecho ambiental."],
+    ["Principio biocultural","Noción acuñada por la Corte Constitucional colombiana: la identidad cultural de ciertas comunidades está entrelazada con un territorio o ecosistema específico, de modo que proteger al uno es proteger a la otra."],
+    ["Justicia intergeneracional","La idea de que los derechos de las generaciones futuras —que aún no pueden litigar por sí mismas— pueden y deben defenderse hoy, especialmente frente a daños ambientales irreversibles."],
+    ["Guardianía / representación","Mecanismo institucional para que un sujeto no humano «actúe» en el mundo jurídico: alguien —un Estado, una comisión mixta, una comunidad— ejerce su representación y vigila el cumplimiento de sus derechos."],
+    ["Sumak Kawsay / Buen Vivir","Concepto de las cosmovisiones andinas sobre una vida en equilibrio con la comunidad y la naturaleza, incorporado como principio constitucional en Ecuador y Bolivia."]
+  ];
+  terms.forEach(function(t){
+    dl.appendChild(el("div",{class:"gterm"},[
+      txt("dt", t[0]),
+      txt("dd", t[1])
+    ]));
+  });
+  wrap.appendChild(dl);
+
+  wrap.appendChild(txt("h3","Fuentes consultadas"));
+  var ul = el("ul",{class:"sources"});
+  [
+    "Corte Constitucional de Colombia, Sentencia T-622 de 2016.",
+    "Corte Suprema de Justicia de Colombia, Sala de Casación Civil, Sentencia STC4360-2018.",
+    "Christopher D. Stone, «Should Trees Have Standing? Toward Legal Rights for Natural Objects» (1972).",
+    "Constitución de la República del Ecuador (2008), Capítulo Séptimo: Derechos de la Naturaleza.",
+    "Estado Plurinacional de Bolivia, Ley N.º 071 de Derechos de la Madre Tierra (2010).",
+    "Dejusticia, análisis de seguimiento a la Sentencia STC4360-2018.",
+    "Observatorio del Principio 10 (CEPAL), fichas jurisprudenciales sobre el río Atrato y la Amazonía colombiana."
+  ].forEach(function(s){ ul.appendChild(txt("li", s)); });
+  wrap.appendChild(ul);
+
+  var actions = el("div",{class:"actions"});
+  var btn = el("button",{class:"btn secondary"}); btn.textContent = "Reiniciar el expediente";
+  btn.addEventListener("click", function(){
+    state = { step:0, meters:{rigor:0,biocultural:0,viabilidad:0}, openedCards:{}, log:[], tensionChoice:null };
+    updateMeters();
+    render();
+  });
+  actions.appendChild(btn);
+  wrap.appendChild(actions);
+  return wrap;
+}
+
+/* ============================================================
+   MAIN RENDER
+   ============================================================ */
+
+function render(){
+  var stage = document.getElementById("stage");
+  stage.innerHTML = "";
+  var entry = FLOW[state.step];
+  var node;
+  switch(entry.type){
+    case "cover": node = renderCover(); break;
+    case "timeline": node = renderTimeline(); break;
+    case "caseIntro": node = renderCaseIntro(entry); break;
+    case "decision": node = renderDecision(entry); break;
+    case "resolution": node = renderResolution(entry); break;
+    case "tribunal": node = renderTribunal(); break;
+    case "ending": node = renderEnding(); break;
+    case "glossary": node = renderGlossary(); break;
+  }
+  stage.appendChild(node);
+  updateDocket();
+  updateRail();
+}
+
+updateMeters();
+render();
+})();
+</script>
